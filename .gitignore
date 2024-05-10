@@ -1,1 +1,6 @@
 /*.py#
+/__pycache__/
+/sort/
+/*.mp4
+/test.py
+/*.png
