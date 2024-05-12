@@ -3,8 +3,16 @@ import string
 import pyarrow
 import pandas as pd
 import numpy as np
+import os
 
-reader = easyocr.Reader(["en"], gpu=False)
+path = os.curdir + "models/OCRPlates/"
+
+reader = easyocr.Reader(
+    ["en"],
+    model_storage_directory=path + "/model",
+    user_network_directory=path + "/user_network",
+    recog_network="ocr_plates",
+)
 
 
 def __is_symbol__(text: str):
@@ -115,38 +123,19 @@ def read_license_plate(license_plate_img):
     Читает номера автомобиля на вырезанном изображении
     """
 
-    detections = reader.readtext(license_plate_img)
+    detections = reader.readtext(license_plate_img, allowlist="1234567890ABEKMHOPCTYX")
 
-    license_plate = {"series": "", "region": "", "country": ""}
+    license_plate = ""
 
-    scores = []
-
+    # print("reading_plate")
     for detection in detections:
         _, text, score = detection
 
         text = text.upper().replace(" ", "")
-
+        print(text)
         # Проверяем на серию
-
-        if license_series_format(text):
-            license_plate["series"] = text
-            scores.append(score)
-
-        # Проверяем на код региона
-
-        if license_region_format(text):
-            license_plate["region"] = text
-            scores.append(score)
-
-        # Проверяем на название страны
-
-        if license_country_format(text):
-            license_plate["country"] = text
-            scores.append(score)
-
-        if all([_ != "" for _ in license_plate.values()]):
-            return license_plate, sum(score) / len(score)
-
+        if check_plate(text):
+            return fix_plate(text), score
     return None, None
 
 
@@ -184,7 +173,7 @@ def write_to_csv(results: dict, results_path: str):
     }
     for frame_number in np.sort(list(results.keys())):
         for car_id in np.sort(list(results[frame_number].keys())):
-            car_bbox = results[frame_number][car_id]["bbox"]
+            car_bbox = results[frame_number][car_id]["car"]["bbox"]
             lp_bbox = results[frame_number][car_id]["license_plate"]["bbox"]
             lp_text_ser = results[frame_number][car_id]["license_plate"]["text"][
                 "series"
@@ -209,5 +198,5 @@ def write_to_csv(results: dict, results_path: str):
             results_["lp_text_score"].append(lp_text_score)
 
     pyarrow.Table.from_pydict(results_).to_pandas(types_mapper=pd.ArrowDtype).to_csv(
-        results_path
+        results_path, index=False
     )

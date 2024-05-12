@@ -1,11 +1,14 @@
+from numpy.random import rand
 from ultralytics import YOLO
 from sort.sort import Sort
 import numpy as np
 import cv2
 from recognition_utils import get_car, read_license_plate, write_to_csv
-import torch
+import os
 
-torch.cuda.set_device(0)
+# import torch
+
+# torch.cuda.set_device(0)
 
 models_plates_names = [
     "./models/platesRec/yolov9_50e.pt",
@@ -35,6 +38,10 @@ def read_video(video_path: str, results_path=None):
         frame_number += 1
         ret, frame = capture.read()
         if ret:
+            if frame_number > 400:
+                continue
+            # if frame_number != 16:
+            #     continue
             results[frame_number] = {}
             # Обнаруживаем машины
             detections = model_car.predict(frame)[0]
@@ -60,37 +67,36 @@ def read_video(video_path: str, results_path=None):
                     license_plate_gray = cv2.cvtColor(
                         license_plate_cropped, cv2.COLOR_BGR2GRAY
                     )
-                    _, license_plate_gray_thresh = cv2.threshold(
-                        license_plate_gray, 64, 255, cv2.THRESH_BINARY
-                    )
+                    for low_thresh in range(135, 150):
+                        _, license_plate_gray_thresh = cv2.threshold(
+                            license_plate_gray, low_thresh, 255, cv2.THRESH_BINARY
+                        )
+                        # license_plate_gray_thresh = license_plate_gray
+                        cv2.imwrite(
+                            f"./test/test_{frame_number}_{low_thresh}_{rand()}.png",
+                            license_plate_gray_thresh,
+                        )
 
-                    # Читаем номер пластины
-                    license_plate_text, text_score = read_license_plate(
-                        license_plate_gray_thresh
-                    )
+                        # Читаем номер пластины
+                        license_plate_text, text_score = read_license_plate(
+                            license_plate_gray_thresh
+                        )
 
-                    if license_plate_text is not None:
-                        results[frame_number][car_id] = {
-                            "car": {"bbox": [xcar1, ycar1, xcar2, ycar2]},
-                            "license_plate": {
-                                "bbox": [x1, y1, x2, y2],
-                                "text": license_plate_text,
-                                "bbox_score": score,
-                                "text_score": text_score,
-                            },
-                        }
+                        if license_plate_text is not None:
+                            results[frame_number][car_id] = {
+                                "car": {"bbox": [xcar1, ycar1, xcar2, ycar2]},
+                                "license_plate": {
+                                    "bbox": [x1, y1, x2, y2],
+                                    "text": license_plate_text,
+                                    "bbox_score": score,
+                                    "text_score": text_score,
+                                },
+                            }
+                            break
 
     if results_path is None:
-        for number in range(len(video_path) - 1, -1, -1):
-            if video_path == ".":
-                break
-            elif video_path == "/":
-                number = -1
-                break
-        if number != -1:
-            results_path = video_path[:number]
-        else:
-            results_path = video_path
+        results_path = os.path.splitext(video_path)[0] + ".csv"
+    print(results)
     write_to_csv(results, results_path)
 
 

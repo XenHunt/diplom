@@ -4,3 +4,12 @@
 /*.mp4
 /test.py
 /*.png
+/images/
+/models/custom_example.zip
+/models/carRecogn/cyrillic_g2.pth
+/models/carRecogn/en_filtered_config.yaml
+*.zip
+/ocr_car_plate/
+/ocr_training/
+/test/
+/test.csv
