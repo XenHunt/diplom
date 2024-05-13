@@ -8,6 +8,8 @@ ultralytics = "*"
 flask = "*"
 pandas = "*"
 easyocr = "*"
+matplotlib = "*"
+gradio = "*"
 
 [dev-packages]
 

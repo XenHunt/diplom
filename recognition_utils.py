@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import os
 
-path = os.curdir + "models/OCRPlates/"
+path = os.path.dirname(os.path.abspath(__file__)) + "/models/OCRPlates"
 
 reader = easyocr.Reader(
     ["en"],
@@ -31,12 +31,12 @@ dict_char_to_int = {"O": "0", "I": "1", "J": "3", "A": "4", "G": "6", "S": "5"}
 dict_int_to_char = {"0": "O", "1": "I", "3": "J", "4": "A", "6": "G", "5": "S"}
 
 
-def license_series_format(text: str):
+def check_plate(text: str):
     """
-    Проверяет формат серии машины (символ, 3 цифры и 2 символа - пример: E100EE)
+    Проверяет правильность формата номера
     """
 
-    if len(text) != 6:
+    if len(text) not in [8, 9]:
         return False
 
     if (
@@ -46,42 +46,15 @@ def license_series_format(text: str):
         and __is_digit__(text[3])
         and __is_symbol__(text[4])
         and __is_symbol__(text[5])
+        and __is_digit__(text[6])
+        and __is_digit__(text[7])
+        and (len(text) == 8 or __is_digit__(text[8]))
     ):
         return True
     return False
 
 
-def license_region_format(text: str):
-    """
-    Проверяет код региона (2-3 цифры - примеры: 22, 01, 123)
-    """
-    if len(text) < 2 or len(text) > 3:
-        return False
-
-    if len(text) == 2:
-        if __is_digit__(text[0]) and __is_digit__(text[1]):
-            return True
-    else:
-        if __is_digit__(text[0]) and __is_digit__(text[1]) and __is_digit__(text[2]):
-            return True
-    return False
-
-
-def license_country_format(text: str):
-    """
-    Проверяет формат кода страны (3 буквы - примеры: RUS, ENG, USA)
-    """
-
-    if len(text) != 3:
-        return False
-
-    if __is_symbol__(text[0]) and __is_symbol__(text[1]) and __is_symbol__(text[2]):
-        return True
-
-    return False
-
-
-def fix_plate(license_plate: dict):
+def fix_plate(license_plate: str):
     """
     Чинит символы в номере машины
     """
@@ -97,8 +70,8 @@ def fix_plate(license_plate: dict):
 
         return _elem
 
-    license_plate["series"] = fix_element(
-        license_plate["series"],
+    license_plate = fix_element(
+        license_plate,
         [
             dict_int_to_char,
             dict_char_to_int,
@@ -106,13 +79,10 @@ def fix_plate(license_plate: dict):
             dict_char_to_int,
             dict_int_to_char,
             dict_int_to_char,
+            dict_char_to_int,
+            dict_char_to_int,
+            dict_char_to_int,
         ],
-    )
-    license_plate["region"] = fix_element(
-        license_plate["region"], [dict_char_to_int, dict_char_to_int, dict_char_to_int]
-    )
-    license_plate["country"] = fix_element(
-        license_plate["country"], [dict_int_to_char, dict_int_to_char, dict_int_to_char]
     )
 
     return license_plate
@@ -124,8 +94,6 @@ def read_license_plate(license_plate_img):
     """
 
     detections = reader.readtext(license_plate_img, allowlist="1234567890ABEKMHOPCTYX")
-
-    license_plate = ""
 
     # print("reading_plate")
     for detection in detections:
@@ -165,9 +133,7 @@ def write_to_csv(results: dict, results_path: str):
         "car_id": [],
         "car_bbox": [],
         "lp_bbox": [],
-        "lp_text_ser": [],
-        "lp_text_reg": [],
-        "lp_text_coun": [],
+        "lp_text": [],
         "lp_bbox_score": [],
         "lp_text_score": [],
     }
@@ -175,15 +141,7 @@ def write_to_csv(results: dict, results_path: str):
         for car_id in np.sort(list(results[frame_number].keys())):
             car_bbox = results[frame_number][car_id]["car"]["bbox"]
             lp_bbox = results[frame_number][car_id]["license_plate"]["bbox"]
-            lp_text_ser = results[frame_number][car_id]["license_plate"]["text"][
-                "series"
-            ]
-            lp_text_reg = results[frame_number][car_id]["license_plate"]["text"][
-                "region"
-            ]
-            lp_text_coun = results[frame_number][car_id]["license_plate"]["text"][
-                "country"
-            ]
+            lp_text = results[frame_number][car_id]["license_plate"]["text"]
             lp_bbox_score = results[frame_number][car_id]["license_plate"]["bbox_score"]
             lp_text_score = results[frame_number][car_id]["license_plate"]["text_score"]
 
@@ -191,9 +149,7 @@ def write_to_csv(results: dict, results_path: str):
             results_["car_id"].append(car_id)
             results_["car_bbox"].append(car_bbox)
             results_["lp_bbox"].append(lp_bbox)
-            results_["lp_text_ser"].append(lp_text_ser)
-            results_["lp_text_reg"].append(lp_text_reg)
-            results_["lp_text_coun"].append(lp_text_coun)
+            results_["lp_text"].append(lp_text)
             results_["lp_bbox_score"].append(lp_bbox_score)
             results_["lp_text_score"].append(lp_text_score)
 

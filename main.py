@@ -13,11 +13,12 @@ import os
 models_plates_names = [
     "./models/platesRec/yolov9_50e.pt",
     "./models/platesRec/yolov9_100e.pt",
+    "./models/platesRec/yolov9_5e_v2.pt",
 ]
 model_car_name = "./models/carRecogn/yolov9c.pt"
 
 
-selected_model = models_plates_names[1]
+selected_model = models_plates_names[2]
 
 vehicles = [2, 3, 5, 7]
 model_car = YOLO(model_car_name)
@@ -38,8 +39,8 @@ def read_video(video_path: str, results_path=None):
         frame_number += 1
         ret, frame = capture.read()
         if ret:
-            if frame_number > 400:
-                continue
+            # if frame_number > 400:
+            #     continue
             # if frame_number != 16:
             #     continue
             results[frame_number] = {}
@@ -67,11 +68,29 @@ def read_video(video_path: str, results_path=None):
                     license_plate_gray = cv2.cvtColor(
                         license_plate_cropped, cv2.COLOR_BGR2GRAY
                     )
-                    for low_thresh in range(135, 150):
+
+                    sharp_filter = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+
+                    license_plate_gray = cv2.filter2D(
+                        license_plate_gray, ddepth=-1, kernel=sharp_filter
+                    )
+
+                    cv2.imwrite(
+                        f"./test/test_orig_{frame_number}_orig_{rand()}.png",
+                        license_plate_cropped,
+                    )
+                    cv2.imwrite(
+                        f"./test/test_{frame_number}_orig_{rand()}.png",
+                        license_plate_gray,
+                    )
+                    for low_thresh in range(142, 150):
                         _, license_plate_gray_thresh = cv2.threshold(
                             license_plate_gray, low_thresh, 255, cv2.THRESH_BINARY
                         )
                         # license_plate_gray_thresh = license_plate_gray
+                        # _, license_plate_gray_thresh = cv2.threshold(
+                        #     license_plate_gray, 147, 255, cv2.THRESH_BINARY
+                        # )
                         cv2.imwrite(
                             f"./test/test_{frame_number}_{low_thresh}_{rand()}.png",
                             license_plate_gray_thresh,
@@ -98,6 +117,10 @@ def read_video(video_path: str, results_path=None):
         results_path = os.path.splitext(video_path)[0] + ".csv"
     print(results)
     write_to_csv(results, results_path)
+
+
+def apply_video_recongition():
+    pass
 
 
 if __name__ == "__main__":
