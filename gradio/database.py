@@ -37,6 +37,14 @@ class Image(Base):
         with sessionmaker(bind=engine)() as session:
             session.delete(self)
 
+    def get_by_id(id):
+        with sessionmaker(bind=engine)() as session:
+            return session.query(Image).filter(Image.id == id).first()
+
+    def get_all():
+        with sessionmaker(bind=engine)() as session:
+            return session.query(Image).all()
+
 
 class Video(Base):
     __tablename__ = "videos"
@@ -64,3 +72,11 @@ class Video(Base):
         """
         with sessionmaker(bind=engine)() as session:
             session.delete(self)
+
+    def get_by_id(id):
+        with sessionmaker(bind=engine)() as session:
+            return session.query(Video).filter(Video.id == id).first()
+
+    def get_all():
+        with sessionmaker(bind=engine)() as session:
+            return session.query(Video).all()
