@@ -10,6 +10,7 @@ pandas = "*"
 easyocr = "*"
 matplotlib = "*"
 gradio = "*"
+sqlalchemy = "*"
 
 [dev-packages]
 
