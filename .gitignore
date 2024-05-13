@@ -13,6 +13,4 @@
 /ocr_training/
 /test/
 /test.csv
-/models/OCRPlates/user_network/__pycache__/
-/Изобр/
-/*.docx
+*test*
