@@ -1,23 +1,19 @@
-import gradio as gr
+from flask import Flask
+from flask_restful import Api
+from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
+
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
+api = Api(app)
+
+cors = CORS(app, supports_credentials=True)
 
 
-def video_identity(process_video, video):
-    print(process_video)
-    return video
+class Base(DeclarativeBase):
+    pass
 
 
-def playing_video():
-    print("playing")
-
-
-new = True
-with gr.Blocks() as demo:
-    with gr.Row():
-        v1 = gr.Video()
-        v2 = gr.Video(interactive=False)
-
-        v1.play(playing_video)
-        v1.upload(lambda x: video_identity(new, x), v1, v2)
-
-if __name__ == "__main__":
-    demo.launch()
+db = SQLAlchemy(model_class=Base)
+db.init_app(app)

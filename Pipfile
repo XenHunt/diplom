@@ -11,6 +11,10 @@ easyocr = "*"
 matplotlib = "*"
 gradio = "*"
 sqlalchemy = "*"
+flask-sqlalchemy = "*"
+flask-restful = "*"
+flask-cors = "*"
+icecream = "*"
 
 [dev-packages]
 
