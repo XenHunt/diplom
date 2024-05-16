@@ -17,10 +17,9 @@ def create_needed_folder(path: str):
     Создает папки по пути path
     :param path: путь до папки - <путь где хранятся все меди файлы>/<название папки для файла>
     """
-    print(path)
     splitted_path = path.split("/")
 
-    for i in range(1, len(splitted_path)):
+    for i in range(1, len(splitted_path) + 1):
         path = "/".join(splitted_path[0:i])
         if not os.path.exists(path):
             os.mkdir(path)

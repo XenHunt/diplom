@@ -17,3 +17,6 @@
 #*
 /ВКР - Бланк Задания - Берлизов Е.С.docx
 /instance/
+/files/
+*.pyc
+/__pycache__/

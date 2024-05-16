@@ -2,6 +2,10 @@ from datetime import date
 from app import db, app
 from sqlalchemy import Date, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
+from helpers.config import config
+import os
+from icecream import ic
+import cv2
 
 
 class ImageModel(db.Model):
@@ -9,15 +13,19 @@ class ImageModel(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
+    original_name: Mapped[str] = mapped_column(String(50), nullable=False)
     date_uploaded: Mapped[date] = mapped_column(
-        Date, default=date.today(), onupdate=date.today()
+        Date, default=date.today()
     )
     date_updated: Mapped[date] = mapped_column(
         Date, default=date.today(), onupdate=date.today()
     )
+    extension:Mapped[str] = mapped_column(String(6), nullable=False)
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, or_name:str, extension:str):
         self.name = name
+        self.original_name = or_name
+        self,extension = extension
 
     @classmethod
     def getAll(cls):
@@ -36,13 +44,42 @@ class ImageModel(db.Model):
 
     @classmethod
     def getById(cls, id: int):
-        return db.queary.filter_by(id=id).first()
+        model = cls.query.filter_by(id=id).first()
+        if type(model) is ImageModel:
+            return model
+        else:
+            return None
+
+    def toJson(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "dateUploaded": self.date_uploaded,
+            "dateUpdated": self.date_updated,
+            "previewUrl": f"/image_preview/{self.id}",
+            "contentUrl": f"/image/{self.id}",
+            "type": "Image",
+        }
 
     @classmethod
-    def create(cls, name: str):
-        model = ImageModel(name)
+    def create(cls, name: str, or_name:str, extension:str):
+        model = ImageModel(name, or_name, extension)
         model.save()
         return model
+
+    @classmethod
+    def getPathById(cls, id: int):
+        model = cls.getById(id)
+        name = ""
+        if type(model) is ImageModel:
+            name = model.original_name
+        # ic(name)
+        return os.path.join(config["images_folders"], f"{name}_{id}")
+
+    def getPath(self):
+        return os.path.join(
+            config["images_folders"], f"{self.original_name}_{self.id}"
+        )
 
 
 class VideoModel(db.Model):
@@ -50,15 +87,20 @@ class VideoModel(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
+    original_name: Mapped[str] = mapped_column(String(50), nullable=False)
+
     date_uploaded: Mapped[date] = mapped_column(
-        Date, default=date.today(), onupdate=date.today()
+        Date, default=date.today()
     )
     date_updated: Mapped[date] = mapped_column(
         Date, default=date.today(), onupdate=date.today()
     )
+    extension:Mapped[str] = mapped_column(String(6), nullable=False)
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, or_name:str, extension:str):
         self.name = name
+        self.original_name = or_name
+        self.extension = extension
 
     @classmethod
     def getAll(cls):
@@ -77,13 +119,55 @@ class VideoModel(db.Model):
 
     @classmethod
     def getById(cls, id: int):
-        return db.queary.filter_by(id=id).first()
+        model = cls.query.filter_by(id=id).first()
+        if type(model) is VideoModel:
+            return model
+        return None
+
+    def toJson(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "dateUploaded": self.date_uploaded,
+            "dateUpdated": self.date_updated,
+            "previewUrl": f"/video_preview/{self.id}",
+            "contentUrl": f"/video/{self.id}",
+            "type": "Video",
+        }
 
     @classmethod
-    def create(cls, name: str):
-        model = VideoModel(name)
+    def create(cls, name: str, or_name:str, extension:str):
+        model = VideoModel(name, or_name, extension)
         model.save()
         return model
+
+    def createPreview(self):
+        # Откроем видео
+        path = self.getPath()
+        ic(path)
+        video = cv2.VideoCapture(path + f"/original.{self.extension}")
+
+        # Получим кадр
+        ret, frame = video.read()
+
+        # Сохраним его
+        if ret:
+            ic()
+            cv2.imwrite(path + "/preview.png", frame)
+        video.release()
+
+    @classmethod
+    def getPathById(cls, id: int):
+        model = cls.getById(id)
+        name = ""
+        if type(model) is VideoModel:
+            name = model.original_name
+        return os.path.join(config["videos_folders"], f"{name}_{id}")
+
+    def getPath(self):
+        return os.path.join(
+            config["videos_folders"], f"{self.original_name}_{self.id}"
+        )
 
 
 with app.app_context():

@@ -1,0 +1,4 @@
+#+export_file_name: index.html
+#+options: num:nil ^:nil H:5 toc:2
+
+#+setupfile: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup

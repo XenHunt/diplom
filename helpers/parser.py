@@ -1,12 +1,9 @@
 from flask_restful import reqparse
 import werkzeug
 
-uploadParser = reqparse.RequestParser()
+uploadParser = reqparse.RequestParser(bundle_errors=True)
 
-# uploadParser.add_argument(
-#     "file", type=werkzeug.datastructures.FileStorage, required=True
-# )
 uploadParser.add_argument(
-    "name", type=str, required=True, help="name required", location="headers"
+    "file", type=werkzeug.datastructures.FileStorage, required=True, location="files"
 )
-# uploadParser.add_argument("age", type=int, required=True, help="age required", location="args")
+uploadParser.add_argument("name", type=str, required=True, location="form")
