@@ -1,12 +1,13 @@
 from flask import send_from_directory
 from flask_cors import cross_origin
-from app import app
+from app import app, rq
 from orm import ImageModel, VideoModel
 from helpers.upload import allowed_img, allowed_video, create_needed_folder
 from werkzeug.utils import secure_filename
 from icecream import ic
 from helpers.parser import uploadParser
 from helpers.config import config
+from redis_functions import processImage, processVideo
 import os
 
 
@@ -65,6 +66,7 @@ def upload_media():
         path = f"{config['images_folders']}/{filename}_{model.id}"
         create_needed_folder(path)
         file.save(f"{path}/original.{extension}")
+        processImage.queue(model)
         return {"message": "Image uploaded"}, 201
 
     if allowed_video(file.filename):
@@ -74,5 +76,18 @@ def upload_media():
         create_needed_folder(path)
         file.save(f"{path}/original.{extension}")
         model.createPreview()
+        processVideo.queue(model)
         return {"message": "Video uploaded"}, 201
     return {"message": "Wrong file type"}, 400
+
+
+@app.route("/<str:type>_<int:id>/status", methods=["GET"])
+def get_status(type: str, id: int):
+    if type == "Video":
+        return {"status": VideoModel.getStatusById(id)}, 200
+    elif type == "Image":
+        return {"status": ImageModel.getStatusById(id)}, 200
+    return {"message": "Bad type of media"}, 400
+
+
+app.run()

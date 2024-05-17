@@ -112,6 +112,16 @@ def read_video(video_path: str, results_path=None):
                                 },
                             }
                             break
+                    if license_plate_text is None:
+                        results[frame_number][car_id] = {
+                            "car": {"bbox": [xcar1, ycar1, xcar2, ycar2]},
+                            "license_plate": {
+                                "bbox": [x1, y1, x2, y2],
+                                "text": "",
+                                "bbox_score": score,
+                                "text_score": 0,
+                            },
+                        }
 
     if results_path is None:
         results_path = os.path.splitext(video_path)[0] + ".csv"
@@ -119,8 +129,86 @@ def read_video(video_path: str, results_path=None):
     write_to_csv(results, results_path)
 
 
-def apply_video_recongition():
-    pass
+def read_image(image_path: str, results_path=None):
+    im = cv2.imread(image_path)
+    results = {}
+    tracker = Sort()
+
+    detections = model_car.predict(im)[0]
+    detections_ = []
+    for license_plate in detections.boxes.data.tolist():
+        x1, y1, x2, y2, score, class_id = license_plate
+        if int(class_id) in vehicles:
+            detections_.append((x1, y1, x2, y2, score))
+    vehicles_id = tracker.update(np.asarray(detections_))
+    license_plate = model_plates.predict(im)[0]
+    for license_plate in license_plate.boxes.data.tolist():
+        x1, y1, x2, y2, score, class_id = license_plate
+        xcar1, ycar1, xcar2, ycar2, car_id = get_car(license_plate, vehicles_id)
+
+        if car_id != -1:
+            # Обрезаем изображение
+            license_plate_cropped = im[int(y1) : int(y2), int(x1) : int(x2)]
+
+            # Переводим в оттенки серого
+            license_plate_gray = cv2.cvtColor(license_plate_cropped, cv2.COLOR_BGR2GRAY)
+
+            sharp_filter = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+
+            license_plate_gray = cv2.filter2D(
+                license_plate_gray, ddepth=-1, kernel=sharp_filter
+            )
+
+            # cv2.imwrite(
+            #     f"./test/test_orig_{frame_number}_orig_{rand()}.png",
+            #     license_plate_cropped,
+            # )
+            # cv2.imwrite(
+            #     f"./test/test_{frame_number}_orig_{rand()}.png",
+            #     license_plate_gray,
+            # )
+            for low_thresh in range(142, 150):
+                _, license_plate_gray_thresh = cv2.threshold(
+                    license_plate_gray, low_thresh, 255, cv2.THRESH_BINARY
+                )
+                # license_plate_gray_thresh = license_plate_gray
+                # _, license_plate_gray_thresh = cv2.threshold(
+                #     license_plate_gray, 147, 255, cv2.THRESH_BINARY
+                # )
+                # cv2.imwrite(
+                #     f"./test/test_{frame_number}_{low_thresh}_{rand()}.png",
+                #     license_plate_gray_thresh,
+                # )
+
+                # Читаем номер пластины
+                license_plate_text, text_score = read_license_plate(
+                    license_plate_gray_thresh
+                )
+
+                if license_plate_text is not None:
+                    results[car_id] = {
+                        "car": {"bbox": [xcar1, ycar1, xcar2, ycar2]},
+                        "license_plate": {
+                            "bbox": [x1, y1, x2, y2],
+                            "text": license_plate_text,
+                            "bbox_score": score,
+                            "text_score": text_score,
+                        },
+                    }
+                    break
+            if license_plate_text is None:
+                results[car_id] = {
+                    "car": {"bbox": [xcar1, ycar1, xcar2, ycar2]},
+                    "license_plate": {
+                        "bbox": [x1, y1, x2, y2],
+                        "text": "",
+                        "bbox_score": score,
+                        "text_score": 0,
+                    },
+                }
+        if results_path is None:
+            results_path = os.path.splitext(image_path)[0] + ".csv"
+        write_to_csv(results, results_path, True)
 
 
 if __name__ == "__main__":

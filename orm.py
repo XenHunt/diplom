@@ -14,18 +14,17 @@ class ImageModel(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     original_name: Mapped[str] = mapped_column(String(50), nullable=False)
-    date_uploaded: Mapped[date] = mapped_column(
-        Date, default=date.today()
-    )
+    date_uploaded: Mapped[date] = mapped_column(Date, default=date.today())
     date_updated: Mapped[date] = mapped_column(
         Date, default=date.today(), onupdate=date.today()
     )
-    extension:Mapped[str] = mapped_column(String(6), nullable=False)
+    extension: Mapped[str] = mapped_column(String(6), nullable=False)
+    status: Mapped[str] = mapped_column(String(15), default="Added")
 
-    def __init__(self, name: str, or_name:str, extension:str):
+    def __init__(self, name: str, or_name: str, extension: str):
         self.name = name
         self.original_name = or_name
-        self,extension = extension
+        self, extension = extension
 
     @classmethod
     def getAll(cls):
@@ -36,6 +35,10 @@ class ImageModel(db.Model):
         db.session.commit()
 
     def update(self):
+        db.session.commit()
+
+    def updateStatus(self, status: str):
+        self.status = status
         db.session.commit()
 
     def delete(self):
@@ -62,7 +65,7 @@ class ImageModel(db.Model):
         }
 
     @classmethod
-    def create(cls, name: str, or_name:str, extension:str):
+    def create(cls, name: str, or_name: str, extension: str):
         model = ImageModel(name, or_name, extension)
         model.save()
         return model
@@ -73,13 +76,21 @@ class ImageModel(db.Model):
         name = ""
         if type(model) is ImageModel:
             name = model.original_name
+        else:
+            raise "No image with id - {id}"
         # ic(name)
         return os.path.join(config["images_folders"], f"{name}_{id}")
 
+    @classmethod
+    def getStatusById(cls, id:int):
+        model = cls.getById(id)
+        if type(model) is ImageModel:
+            return model.status
+        else:
+            raise f"No image with id - {id}!"
+
     def getPath(self):
-        return os.path.join(
-            config["images_folders"], f"{self.original_name}_{self.id}"
-        )
+        return os.path.join(config["images_folders"], f"{self.original_name}_{self.id}")
 
 
 class VideoModel(db.Model):
@@ -89,15 +100,14 @@ class VideoModel(db.Model):
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     original_name: Mapped[str] = mapped_column(String(50), nullable=False)
 
-    date_uploaded: Mapped[date] = mapped_column(
-        Date, default=date.today()
-    )
+    date_uploaded: Mapped[date] = mapped_column(Date, default=date.today())
     date_updated: Mapped[date] = mapped_column(
         Date, default=date.today(), onupdate=date.today()
     )
-    extension:Mapped[str] = mapped_column(String(6), nullable=False)
+    extension: Mapped[str] = mapped_column(String(6), nullable=False)
+    status: Mapped[str] = mapped_column(String(15), default="Added")
 
-    def __init__(self, name: str, or_name:str, extension:str):
+    def __init__(self, name: str, or_name: str, extension: str):
         self.name = name
         self.original_name = or_name
         self.extension = extension
@@ -115,6 +125,10 @@ class VideoModel(db.Model):
 
     def delete(self):
         db.session.delete(self)
+        db.session.commit()
+
+    def updateStatus(self, status: str):
+        self.status = status
         db.session.commit()
 
     @classmethod
@@ -136,7 +150,7 @@ class VideoModel(db.Model):
         }
 
     @classmethod
-    def create(cls, name: str, or_name:str, extension:str):
+    def create(cls, name: str, or_name: str, extension: str):
         model = VideoModel(name, or_name, extension)
         model.save()
         return model
@@ -162,12 +176,21 @@ class VideoModel(db.Model):
         name = ""
         if type(model) is VideoModel:
             name = model.original_name
+        else:
+            raise f"No video with id - {id}"
         return os.path.join(config["videos_folders"], f"{name}_{id}")
 
+    @classmethod
+    def getStatusById(cls, id:int):
+        model = cls.getById(id)
+        if type(model) is VideoModel:
+            return model.status
+        else:
+            raise f"No video with id - {id}"
+
     def getPath(self):
-        return os.path.join(
-            config["videos_folders"], f"{self.original_name}_{self.id}"
-        )
+        return os.path.join(config["videos_folders"], f"{self.original_name}_{self.id}")
+
 
 
 with app.app_context():

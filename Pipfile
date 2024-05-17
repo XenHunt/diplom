@@ -15,6 +15,10 @@ flask-sqlalchemy = "*"
 flask-restful = "*"
 flask-cors = "*"
 icecream = "*"
+flask-socketio = "*"
+redis = "*"
+rq = "*"
+flask-rq2 = "*"
 
 [dev-packages]
 

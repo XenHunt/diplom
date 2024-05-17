@@ -122,30 +122,59 @@ def get_car(license_plate, cars):
             foundIt = True
             break
     if foundIt:
+        print(cars[car_indx])
         return cars[car_indx]
 
     return -1, -1, -1, -1, -1
 
 
-def write_to_csv(results: dict, results_path: str):
-    results_ = {
-        "frame_number": [],
-        "car_id": [],
-        "car_bbox": [],
-        "lp_bbox": [],
-        "lp_text": [],
-        "lp_bbox_score": [],
-        "lp_text_score": [],
-    }
-    for frame_number in np.sort(list(results.keys())):
-        for car_id in np.sort(list(results[frame_number].keys())):
-            car_bbox = results[frame_number][car_id]["car"]["bbox"]
-            lp_bbox = results[frame_number][car_id]["license_plate"]["bbox"]
-            lp_text = results[frame_number][car_id]["license_plate"]["text"]
-            lp_bbox_score = results[frame_number][car_id]["license_plate"]["bbox_score"]
-            lp_text_score = results[frame_number][car_id]["license_plate"]["text_score"]
+def write_to_csv(results: dict, results_path: str, isimg=False):
+    if not isimg:
+        results_ = {
+            "frame_number": [],
+            "car_id": [],
+            "car_bbox": [],
+            "lp_bbox": [],
+            "lp_text": [],
+            "lp_bbox_score": [],
+            "lp_text_score": [],
+        }
+        for frame_number in np.sort(list(results.keys())):
+            for car_id in np.sort(list(results[frame_number].keys())):
+                car_bbox = results[frame_number][car_id]["car"]["bbox"]
+                lp_bbox = results[frame_number][car_id]["license_plate"]["bbox"]
+                lp_text = results[frame_number][car_id]["license_plate"]["text"]
+                lp_bbox_score = results[frame_number][car_id]["license_plate"][
+                    "bbox_score"
+                ]
+                lp_text_score = results[frame_number][car_id]["license_plate"][
+                    "text_score"
+                ]
 
-            results_["frame_number"].append(frame_number)
+                results_["frame_number"].append(frame_number)
+                results_["car_id"].append(car_id)
+                results_["car_bbox"].append(car_bbox)
+                results_["lp_bbox"].append(lp_bbox)
+                results_["lp_text"].append(lp_text)
+                results_["lp_bbox_score"].append(lp_bbox_score)
+                results_["lp_text_score"].append(lp_text_score)
+    else:
+
+        results_ = {
+            "car_id": [],
+            "car_bbox": [],
+            "lp_bbox": [],
+            "lp_text": [],
+            "lp_bbox_score": [],
+            "lp_text_score": [],
+        }
+        for car_id in np.sort(list(results.keys())):
+            car_bbox = results[car_id]["car"]["bbox"]
+            lp_bbox = results[car_id]["license_plate"]["bbox"]
+            lp_text = results[car_id]["license_plate"]["text"]
+            lp_bbox_score = results[car_id]["license_plate"]["bbox_score"]
+            lp_text_score = results[car_id]["license_plate"]["text_score"]
+
             results_["car_id"].append(car_id)
             results_["car_bbox"].append(car_bbox)
             results_["lp_bbox"].append(lp_bbox)
