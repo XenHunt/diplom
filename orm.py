@@ -24,7 +24,7 @@ class ImageModel(db.Model):
     def __init__(self, name: str, or_name: str, extension: str):
         self.name = name
         self.original_name = or_name
-        self, extension = extension
+        self.extension = extension
 
     @classmethod
     def getAll(cls):
@@ -38,8 +38,9 @@ class ImageModel(db.Model):
         db.session.commit()
 
     def updateStatus(self, status: str):
-        self.status = status
-        db.session.commit()
+        with app.app_context():
+            row_changed = ImageModel.query.filter_by(id = self.id).update(dict(status=status))
+            db.session.commit()
 
     def delete(self):
         db.session.delete(self)
@@ -77,17 +78,17 @@ class ImageModel(db.Model):
         if type(model) is ImageModel:
             name = model.original_name
         else:
-            raise "No image with id - {id}"
+            raise Exception(f"No image with id - {id}!")
         # ic(name)
         return os.path.join(config["images_folders"], f"{name}_{id}")
 
     @classmethod
-    def getStatusById(cls, id:int):
+    def getStatusById(cls, id: int):
         model = cls.getById(id)
         if type(model) is ImageModel:
             return model.status
         else:
-            raise f"No image with id - {id}!"
+            raise Exception(f"No image with id - {id}!")
 
     def getPath(self):
         return os.path.join(config["images_folders"], f"{self.original_name}_{self.id}")
@@ -128,8 +129,9 @@ class VideoModel(db.Model):
         db.session.commit()
 
     def updateStatus(self, status: str):
-        self.status = status
-        db.session.commit()
+        with app.app_context():
+            row_changed = VideoModel.query.filter_by(id = self.id).update(dict(status=status))
+            db.session.commit()
 
     @classmethod
     def getById(cls, id: int):
@@ -153,13 +155,15 @@ class VideoModel(db.Model):
     def create(cls, name: str, or_name: str, extension: str):
         model = VideoModel(name, or_name, extension)
         model.save()
+        ic(model.extension)
         return model
 
     def createPreview(self):
         # Откроем видео
         path = self.getPath()
         ic(path)
-        video = cv2.VideoCapture(path + f"/original.{self.extension}")
+        ic(os.path.join(path, f"original{self.extension}"))
+        video = cv2.VideoCapture(os.path.join(path, f"original{self.extension}"))
 
         # Получим кадр
         ret, frame = video.read()
@@ -167,7 +171,7 @@ class VideoModel(db.Model):
         # Сохраним его
         if ret:
             ic()
-            cv2.imwrite(path + "/preview.png", frame)
+            cv2.imwrite(os.path.join(path, "preview.png"), frame)
         video.release()
 
     @classmethod
@@ -177,20 +181,21 @@ class VideoModel(db.Model):
         if type(model) is VideoModel:
             name = model.original_name
         else:
-            raise f"No video with id - {id}"
+            raise Exception(f"No video with id - {id}")
         return os.path.join(config["videos_folders"], f"{name}_{id}")
 
     @classmethod
-    def getStatusById(cls, id:int):
+    def getStatusById(cls, id: int):
         model = cls.getById(id)
         if type(model) is VideoModel:
             return model.status
         else:
-            raise f"No video with id - {id}"
+            raise Exception(f"No video with id - {id}")
 
     def getPath(self):
-        return os.path.join(config["videos_folders"], f"{self.original_name}_{self.id}")
-
+        return os.path.join(
+            config["videos_folders"], f"{self.original_name}_{self.id}/"
+        )
 
 
 with app.app_context():

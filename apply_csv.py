@@ -51,7 +51,7 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
     ret = True
     path, ext = os.path.splitext(video_path)
     output_video = cv2.VideoWriter(
-        path + f"_filtered.{ext}",
+        path + f"_filtered{ext}",
         cv2.VideoWriter.fourcc(*"DIVX"),
         fps,
         (width, height),
@@ -267,7 +267,7 @@ def apply_and_save_image(image_path: str, csv_path: str, thickness=10):
             cv2.LINE_AA,
         )
     path, ext = os.path.splitext(image_path)
-    cv2.imwrite(path + f"_result.{ext}", image)
+    cv2.imwrite(path + f"_filtered{ext}", image)
 
 
 if __name__ == "__main__":

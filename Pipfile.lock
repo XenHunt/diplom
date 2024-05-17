@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a588781e98bcc53448d74f4f15246111079e7b374dc3511f07798734ce1805d6"
+            "sha256": "a0776bb0cda984259c88ca00ee8a520b7c2f9c4810ed66574cf3cf6e7b7cc355"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -340,6 +340,14 @@
             "markers": "python_version >= '3.8'",
             "version": "==3.0.3"
         },
+        "flask-cli": {
+            "hashes": [
+                "sha256:625b534f1bd4d05cbd2084b6b820e2d8cbfea8bc08dd3ee786f365bc0591f1d8",
+                "sha256:6604ab407c0a2f6cdb51e1f64bdb01b8b135d547a0a99189b9158353ded6eeb9"
+            ],
+            "index": "pypi",
+            "version": "==0.4.0"
+        },
         "flask-cors": {
             "hashes": [
                 "sha256:eeb69b342142fdbf4766ad99357a7f3876a2ceb77689dc10ff912aac06c389e4",
@@ -357,11 +365,13 @@
             "version": "==0.3.10"
         },
         "flask-rq2": {
+            "extras": [
+                "cli"
+            ],
             "hashes": [
                 "sha256:3ef6395065255447f8e1516ccca24858ba87da1d71a6975e0e3b55256bf04967",
                 "sha256:abe1e52d3b98abe37e85830a614ba6af864516f1b6cf2229f352f8500eafc5fd"
             ],
-            "index": "pypi",
             "version": "==18.3"
         },
         "flask-socketio": {
@@ -974,7 +984,7 @@
                 "sha256:f870204a840a60da0b12273ef34f7051e98c3b5961b61b0c2c1be6dfd64fbcd3",
                 "sha256:ffa75af20b44f8dba823498024771d5ac50620e6915abac414251bd971b4529f"
             ],
-            "markers": "python_version >= '3.12'",
+            "markers": "python_version >= '3.9'",
             "version": "==1.26.4"
         },
         "nvidia-cublas-cu12": {

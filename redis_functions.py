@@ -1,3 +1,4 @@
+import time
 from app import rq
 from orm import ImageModel, VideoModel
 from main import read_video, read_image
@@ -5,45 +6,62 @@ from fix_data import fix_csv_data
 from apply_csv import apply_and_save_video, apply_and_save_image
 import pandas as pd
 import os
+from icecream import ic
 
 
-@rq.job()
+@rq.job(timeout=-1)
 def processVideo(vmodel: VideoModel):
     path = vmodel.getPath()
     vmodel.updateStatus("Reading")
+    ic(vmodel.extension)
+    ic(path)
     read_video(
-        os.path.join(path, f"/original.{vmodel.extension}"),
+        os.path.join(path, f"original{vmodel.extension}"),
         os.path.join(path, "data.csv"),
     )
+    # Теперь надо проверить есть ли созданный data.csv
+    if not os.path.exists(os.path.join(path, "data.csv")):
+        vmodel.updateStatus("Done")
+        return
+    ic()
     vmodel.updateStatus("Interpolating")
     fix_csv_data(os.path.join(path, "data.csv"))
+    ic()
     vmodel.updateStatus("Applying")
     apply_and_save_video(
-        os.path.join(path, f"original.{vmodel.extension}"),
+        os.path.join(path, f"original{vmodel.extension}"),
         os.path.join(path, "data_fixed.csv"),
     )
+    ic()
     vmodel.updateStatus("Done")
 
 
-@rq.job()
+@rq.job(timeout=-1)
 def processImage(imodel: ImageModel):
+    ic("HERE")
     path = imodel.getPath()
     imodel.updateStatus("Reading")
+    ic(os.path.join(path, f"original{imodel.extension}"))
     read_image(
-        os.path.join(path, f"original.{imodel.extension}"),
+        os.path.join(path, f"original{imodel.extension}"),
         os.path.join(path, "data.csv"),
     )
+
+    # Теперь надо проверить есть ли созданный data.csv
+    if not os.path.exists(os.path.join(path, "data.csv")):
+        imodel.updateStatus("Done")
+        return
     imodel.updateStatus("Interpolating")
     fix_csv_data(os.path.join(path, "data.csv"))
     imodel.updateStatus("Applying")
     apply_and_save_image(
-        os.path.join(path, f"original.{imodel.extension}"),
+        os.path.join(path, f"original{imodel.extension}"),
         os.path.join(path, "data_fixed.csv"),
     )
     imodel.updateStatus("Done")
 
 
-@rq.job
+@rq.job()
 def changePlateNumber(car_id: int, number: str, model: VideoModel | ImageModel):
     model.updateStatus("Changing")
     path = os.path.join(model.getPath(), "data_fixed.csv")

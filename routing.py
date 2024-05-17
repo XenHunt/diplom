@@ -8,6 +8,7 @@ from icecream import ic
 from helpers.parser import uploadParser
 from helpers.config import config
 from redis_functions import processImage, processVideo
+import socket_paths
 import os
 
 
@@ -26,12 +27,8 @@ def get_all_media():
 @app.route("/video_preview/<id>", methods=["GET"])
 def get_video_preiview(id: int):
     path = VideoModel.getPathById(id)
+    ic(path)
     return send_from_directory(path, "preview.png"), 200
-
-
-@app.route("/video/<id>", methods=["POST"])
-def get_video(id: int):
-    return "Hello"
 
 
 @app.route("/image_preview/<id>", methods=["GET"])
@@ -45,9 +42,34 @@ def get_image_preview(id: int):
     return {"message": "No preview"}, 404
 
 
+@app.route("/video/<id>", methods=["GET"])
+def get_video(id: int):
+    model = VideoModel.getById(id)
+    if type(model) is not VideoModel:
+        return {"message": "No such video"}, 404
+    if not os.path.exists(
+        os.path.join(model.getPath(), f"original_filtered{model.extension}")
+    ):
+        return send_from_directory(model.getPath(), f"original{model.extension}"), 200
+    return (
+        send_from_directory(model.getPath(), f"original_filtered{model.extension}"),
+        200,
+    )
+
+
 @app.route("/image/<id>", methods=["GET"])
 def get_image(id: int):
-    return "Hello"
+    model = ImageModel.getById(id)
+    if type(model) is not ImageModel:
+        return {"message": "No such image"}, 404
+    if not os.path.exists(
+        os.path.join(model.getPath(), f"origina_filtered{model.extension}")
+    ):
+        return send_from_directory(model.getPath(), f"original{model.extension}"), 200
+    return (
+        send_from_directory(model.getPath(), f"origina_filtered{model.extension}"),
+        200,
+    )
 
 
 @app.route("/upload", methods=["POST"])
@@ -65,7 +87,7 @@ def upload_media():
         model = ImageModel.create(name, filename, extension)
         path = f"{config['images_folders']}/{filename}_{model.id}"
         create_needed_folder(path)
-        file.save(f"{path}/original.{extension}")
+        file.save(f"{path}/original{extension}")
         processImage.queue(model)
         return {"message": "Image uploaded"}, 201
 
@@ -74,14 +96,14 @@ def upload_media():
         model = VideoModel.create(name, filename, extension)
         path = f"{config['videos_folders']}/{filename}_{model.id}"
         create_needed_folder(path)
-        file.save(f"{path}/original.{extension}")
+        file.save(f"{path}/original{extension}")
         model.createPreview()
         processVideo.queue(model)
         return {"message": "Video uploaded"}, 201
     return {"message": "Wrong file type"}, 400
 
 
-@app.route("/<str:type>_<int:id>/status", methods=["GET"])
+@app.route("/<type>_<int:id>/status", methods=["GET"])
 def get_status(type: str, id: int):
     if type == "Video":
         return {"status": VideoModel.getStatusById(id)}, 200
@@ -90,4 +112,7 @@ def get_status(type: str, id: int):
     return {"message": "Bad type of media"}, 400
 
 
-app.run()
+with app.app_context():
+    model = VideoModel.getById(8)
+    if type(model) is VideoModel:
+        model.updateStatus("Done")

@@ -32,9 +32,14 @@ def fix_csv_data(path: str):
         df_ = df[df["car_id"] == car_id]
 
         # Вычислим номер машины как то значение у которого в сумме вероятность больше
-
+        # print(np.unique(np.array(df_["lp_text"])))
+        # Должны применять, если не все None:
         grouped = df_.groupby(["lp_text"])["lp_text_score"].sum()
-        label = grouped.idxmax()
+        if not np.all(np.array(df_["lp_text"]) == None) and not len(grouped) == 0:
+            print(len(grouped))
+            label = grouped.idxmax()
+        else:
+            label = None
         # Заменим все предсказания на него
 
         df_["lp_text"] = label
@@ -121,10 +126,10 @@ def fix_csv_data(path: str):
                     pd.Series(
                         {
                             "frame_number": y[i],
-                            "car_id": result_step["car_id"],
+                            "car_id": car_id,
                             "car_bbox": car_bbox[i],
                             "lp_bbox": lp_bbox[i],
-                            "lp_text": result_step["lp_text"],
+                            "lp_text": label,
                             "lp_bbox_score": mean_lp_bbox_score,
                             "lp_text_score": mean_lp_text_score,
                         }
@@ -157,4 +162,4 @@ def fix_csv_data(path: str):
 
 
 if __name__ == "__main__":
-    fix_csv_data("test.csv")
+    fix_csv_data("./files/videos/test_7/data.csv")

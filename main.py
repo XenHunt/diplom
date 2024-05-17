@@ -4,6 +4,7 @@ from sort.sort import Sort
 import numpy as np
 import cv2
 from recognition_utils import get_car, read_license_plate, write_to_csv
+from icecream import ic
 import os
 
 # import torch
@@ -29,16 +30,20 @@ def read_video(video_path: str, results_path=None):
     """
     Считывает видеофайл
     """
-
+    ic(os.curdir)
     results = {}
+    ic(video_path)
     capture = cv2.VideoCapture(video_path)
+    ic()
     tracker = Sort()
     ret = True
     frame_number = -1
     while ret:
         frame_number += 1
         ret, frame = capture.read()
+        ic("inside")
         if ret:
+            ic("good ret")
             # if frame_number > 400:
             #     continue
             # if frame_number != 16:

@@ -18,7 +18,8 @@ icecream = "*"
 flask-socketio = "*"
 redis = "*"
 rq = "*"
-flask-rq2 = "*"
+flask-rq2 = {extras = ["cli"], version = "*"}
+flask-cli = "*"
 
 [dev-packages]
 
