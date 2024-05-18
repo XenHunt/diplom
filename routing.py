@@ -1,4 +1,4 @@
-from flask import send_from_directory
+from flask import send_file, send_from_directory
 from flask_cors import cross_origin
 from app import app, rq
 from orm import ImageModel, VideoModel
@@ -50,11 +50,27 @@ def get_video(id: int):
     if not os.path.exists(
         os.path.join(model.getPath(), f"original_filtered{model.extension}")
     ):
-        return send_from_directory(model.getPath(), f"original{model.extension}"), 200
+        return (
+            send_file(
+                os.path.join(model.getPath(), f"original{model.extension}"),
+                mimetype="video/mp4",
+                as_attachment=False,
+            ),
+            200,
+        )
     return (
-        send_from_directory(model.getPath(), f"original_filtered{model.extension}"),
+        send_file(
+            os.path.join(model.getPath(), f"original_filtered{model.extension}"),
+            mimetype="video/mp4",
+            as_attachment=False,
+        ),
         200,
     )
+
+
+@app.route("/test-video", methods=["GET"])
+def test_video():
+    return send_file("test.mp4", mimetype="video/mp4", as_attachment=False)
 
 
 @app.route("/image/<id>", methods=["GET"])
