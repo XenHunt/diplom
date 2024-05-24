@@ -2,6 +2,11 @@ import cv2
 import pandas as pd
 import numpy as np
 import os
+import ffmpegcv
+
+
+def get_contrast_color(img):
+    average_color = np.mean(img, axis=(0, 1))
 
 
 def fix_list(x: str):
@@ -43,19 +48,20 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
 
     capture = cv2.VideoCapture(video_path)
 
-    fps = capture.get(cv2.CAP_PROP_FPS)
-    width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # fps = capture.get(cv2.CAP_PROP_FPS)
+    # width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    # height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     frame_number = -1
     ret = True
     path, ext = os.path.splitext(video_path)
-    output_video = cv2.VideoWriter(
-        path + f"_filtered{ext}",
-        cv2.VideoWriter.fourcc(*"DIVX"),
-        fps,
-        (width, height),
-    )
+    output_video = ffmpegcv.VideoWriterNV(path + f"_filtered{ext}", "h264")
+    # output_video = cv2.VideoWriter(
+    #     path + f"_filtered{ext}",
+    #     cv2.VideoWriter.fourcc(*"DIVX"),
+    #     fps,
+    #     (width, height),
+    # )
     while ret:
         ret, frame = capture.read()
         frame_number += 1
