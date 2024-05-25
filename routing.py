@@ -94,10 +94,12 @@ def upload_media():
     data = uploadParser.parse_args()
     file = data["file"]
     filename, extension = os.path.splitext(file.filename)
+    ic(data["name"])
     ic(filename)
     ic(extension)
     filename = secure_filename(filename)
     name = secure_filename(data["name"])
+    ic(name)
     if allowed_img(file.filename):
         # Сохраним в папку config['images_folders']/<название файла>_<номер id>/original.<расширение>
         model = ImageModel.create(name, filename, extension)

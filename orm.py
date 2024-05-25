@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import datetime
 from app import db, app
-from sqlalchemy import Date, Integer, String
+from sqlalchemy import DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 from helpers.config import config
 import os
@@ -14,9 +14,9 @@ class ImageModel(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     original_name: Mapped[str] = mapped_column(String(50), nullable=False)
-    date_uploaded: Mapped[date] = mapped_column(Date, default=date.today())
-    date_updated: Mapped[date] = mapped_column(
-        Date, default=date.today(), onupdate=date.today()
+    date_uploaded: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+    date_updated: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now(), onupdate=datetime.now()
     )
     extension: Mapped[str] = mapped_column(String(6), nullable=False)
     status: Mapped[str] = mapped_column(String(15), default="Added")
@@ -39,7 +39,9 @@ class ImageModel(db.Model):
 
     def updateStatus(self, status: str):
         with app.app_context():
-            row_changed = ImageModel.query.filter_by(id = self.id).update(dict(status=status))
+            row_changed = ImageModel.query.filter_by(id=self.id).update(
+                dict(status=status)
+            )
             db.session.commit()
 
     def delete(self):
@@ -101,9 +103,9 @@ class VideoModel(db.Model):
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     original_name: Mapped[str] = mapped_column(String(50), nullable=False)
 
-    date_uploaded: Mapped[date] = mapped_column(Date, default=date.today())
-    date_updated: Mapped[date] = mapped_column(
-        Date, default=date.today(), onupdate=date.today()
+    date_uploaded: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+    date_updated: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now(), onupdate=datetime.now()
     )
     extension: Mapped[str] = mapped_column(String(6), nullable=False)
     status: Mapped[str] = mapped_column(String(15), default="Added")
@@ -130,7 +132,9 @@ class VideoModel(db.Model):
 
     def updateStatus(self, status: str):
         with app.app_context():
-            row_changed = VideoModel.query.filter_by(id = self.id).update(dict(status=status))
+            row_changed = VideoModel.query.filter_by(id=self.id).update(
+                dict(status=status)
+            )
             db.session.commit()
 
     @classmethod
