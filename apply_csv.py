@@ -13,14 +13,14 @@ def fix_list(x: str):
     x_list = x.split()
     x_ = ""
     numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-    print(x_list)
+    # print(x_list)
     for symb in x_list:
         x_ += symb
         if "]" not in symb and any([num in symb for num in numbers]):
             x_ += ", "
         else:
             x_ += " "
-        print(x_)
+        # print(x_)
     return np.array(eval(x_))
 
 

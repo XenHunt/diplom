@@ -63,16 +63,24 @@ def processImage(imodel: ImageModel):
 
 @rq.job()
 def changePlateNumber(car_id: int, number: str, model: VideoModel | ImageModel):
+    def change(x):
+        if x.car_id == car_id:
+            x.lp_text = number
+        return x
+
     model.updateStatus("Changing")
     path = os.path.join(model.getPath(), "data_fixed.csv")
+    ic(path)
     df = pd.read_csv(path)
-    df.loc[df["car_id"] == car_id, "plate_number"] = number
+    df["lp_text"] = df.apply(change, axis=1)["lp_text"]
+    # ic(df)
+    # ic(df)
     df.to_csv(path, index=False)
     if type(model) is VideoModel:
         model.updateStatus("Reapplying")
         apply_and_save_video(
             os.path.join(model.getPath(), f"original.{model.extension}"),
-            os.path.join(model.getPath(), "data_fixed.csv"),
+            path,
         )
         model.updateStatus("Done")
 
@@ -80,6 +88,6 @@ def changePlateNumber(car_id: int, number: str, model: VideoModel | ImageModel):
         model.updateStatus("Reapplying")
         apply_and_save_image(
             os.path.join(model.getPath(), f"original.{model.extension}"),
-            os.path.join(model.getPath(), "data_fixed.csv"),
+            path,
         )
         model.updateStatus("Done")

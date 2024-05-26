@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 pipenv shell
-FLASK_APP=routing.py
 
 # Надо запустить асинхроно flask и rq и если один из них вылетел, то другой закрыть
-python -m flask --debug  --app routing.py run &
+python __init__.py &
 PID1=$!
 
 rq worker  --results-ttl 5 &

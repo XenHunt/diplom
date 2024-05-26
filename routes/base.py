@@ -1,6 +1,6 @@
 from flask import send_file, send_from_directory
 from flask_cors import cross_origin
-from app import app, rq
+from app import app
 from orm import ImageModel, VideoModel
 from helpers.upload import allowed_img, allowed_video, create_needed_folder
 from werkzeug.utils import secure_filename
@@ -8,7 +8,6 @@ from icecream import ic
 from helpers.parser import uploadParser
 from helpers.config import config
 from redis_functions import processImage, processVideo
-import socket_paths
 import os
 
 
