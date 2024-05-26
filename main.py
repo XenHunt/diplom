@@ -8,7 +8,7 @@ from icecream import ic
 import os
 
 # import torch
-
+# TODO заменить Sort на DeepSort
 # torch.cuda.set_device(0)
 
 models_plates_names = [
