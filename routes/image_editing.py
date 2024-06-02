@@ -3,7 +3,7 @@ from orm import ImageModel
 from redis_functions import changePlateNumber
 import cv2
 import os
-from helpers.edit import check_number, get_df
+from helpers.edit import check_number, get_df, get_contrast_color
 from flask import Response
 from helpers.parser import editParser, updateParser
 
@@ -13,7 +13,7 @@ def get_imageedit_ids(image_id: int):
     model = ImageModel.getById(image_id)
     if model is None:
         raise Exception("No such image")
-    df = get_df(os.path.join(model.getPath(), "data_fixed.csv"))
+    df = get_df(os.path.join(model.getPath(), "data.csv"))
     return df["car_id"].values.tolist(), 200
 
 
@@ -22,7 +22,7 @@ def get_imageedit_preview(image_id: int):
     model = ImageModel.getById(image_id)
     if model is None:
         raise Exception("No such image")
-    df = get_df(os.path.join(model.getPath(), "data_fixed.csv"))
+    df = get_df(os.path.join(model.getPath(), "data.csv"))
     image = cv2.imread(os.path.join(model.getPath(), f"original{model.extension}"))
     for car_id in df["car_id"]:
         df_car_id = df[df["car_id"] == car_id]
@@ -43,11 +43,11 @@ def get_imageedit_preview(image_id: int):
 
         cv2.putText(
             image,
-            car_id,
-            (lp_bbox[0], lp_bbox[3] - lp_bbox[1]),
+            str(car_id),
+            (lp_bbox[0], lp_bbox[1]),
             cv2.FONT_HERSHEY_DUPLEX,
-            1.5,
-            (255, 0, 0),
+            5,
+            get_contrast_color(image[lp_bbox[1] : lp_bbox[3], lp_bbox[0] : lp_bbox[2]]),
             1,
             cv2.LINE_AA,
         )
@@ -62,7 +62,7 @@ def get_imageedit_car(image_id: int, car_id: int):
     model = ImageModel.getById(image_id)
     if model is None:
         raise Exception("No such image")
-    df = get_df(os.path.join(model.getPath(), "data_fixed.csv"))
+    df = get_df(os.path.join(model.getPath(), "data.csv"))
     df = df[df["car_id"] == car_id]
     if len(df) == 0:
         raise Exception("No such car")
@@ -98,7 +98,7 @@ def get_image_plate_number(image_id: int, car_id: int):
     model = ImageModel.getById(image_id)
     if model is None:
         raise Exception("No such image")
-    df = get_df(os.path.join(model.getPath(), "data_fixed.csv"))
+    df = get_df(os.path.join(model.getPath(), "data.csv"))
     df = df[df["car_id"] == car_id]
     if len(df) == 0:
         raise Exception("No such car")

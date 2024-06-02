@@ -52,16 +52,16 @@ def processImage(imodel: ImageModel):
         imodel.updateStatus("Done")
         return
     imodel.updateStatus("Interpolating")
-    fix_csv_data(os.path.join(path, "data.csv"))
+    # fix_csv_data(os.path.join(path, "data.csv"))
     imodel.updateStatus("Applying")
     apply_and_save_image(
         os.path.join(path, f"original{imodel.extension}"),
-        os.path.join(path, "data_fixed.csv"),
+        os.path.join(path, "data.csv"),
     )
     imodel.updateStatus("Done")
 
 
-@rq.job()
+@rq.job(timeout=-1)
 def changePlateNumber(car_id: int, number: str, model: VideoModel | ImageModel):
     def change(x):
         if x.car_id == car_id:

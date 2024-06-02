@@ -21,3 +21,7 @@
 *.pyc
 /__pycache__/
 /Изобр/
+/deep_sort/
+*.py#
+/models/mars/
+/tracker.py

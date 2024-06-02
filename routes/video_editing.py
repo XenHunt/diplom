@@ -3,7 +3,7 @@ from orm import VideoModel
 from redis_functions import changePlateNumber
 import cv2
 import os
-from helpers.edit import check_number, get_df
+from helpers.edit import check_number, get_df, get_contrast_color
 from flask import Response
 from helpers.parser import editParser, updateParser
 from icecream import ic
@@ -76,7 +76,7 @@ def get_video_preview(video_id: int, frame_number: int):
             (lp_bbox[0], lp_bbox[3]),
             cv2.FONT_HERSHEY_DUPLEX,
             1.5,
-            (255, 0, 0),
+            get_contrast_color(frame[lp_bbox[1] : lp_bbox[3], lp_bbox[0] : lp_bbox[2]]),
             1,
             cv2.LINE_AA,
         )

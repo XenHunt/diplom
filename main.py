@@ -1,9 +1,10 @@
-from numpy.random import rand
+# from numpy.random import rand
 from ultralytics import YOLO
 from sort.sort import Sort
 import numpy as np
+from deep_sort_realtime.deepsort_tracker import DeepSort
 import cv2
-from recognition_utils import get_car, read_license_plate, write_to_csv
+from recognition_utils import get_car, read_license_plate, write_to_csv, get_car_yolo
 from icecream import ic
 import os
 
@@ -22,7 +23,6 @@ model_car_name = "./models/carRecogn/yolov9c.pt"
 selected_model = models_plates_names[2]
 
 vehicles = [2, 3, 5, 7]
-model_car = YOLO(model_car_name)
 model_plates = YOLO(selected_model)
 
 
@@ -35,35 +35,47 @@ def read_video(video_path: str, results_path=None):
     ic(video_path)
     capture = cv2.VideoCapture(video_path)
     ic()
-    tracker = Sort()
+    # tracker = Sort()
+    model_car = YOLO(model_car_name)
     ret = True
     frame_number = -1
     while ret:
         frame_number += 1
         ret, frame = capture.read()
-        ic("inside")
+        # ic("inside")
         if ret:
-            ic("good ret")
-            # if frame_number > 400:
-            #     continue
+            # ic("good ret")
+            if frame_number > 890 or frame_number < 763:
+                continue
             # if frame_number != 16:
             #     continue
             results[frame_number] = {}
             # Обнаруживаем машины
-            detections = model_car.predict(frame)[0]
+            detections = model_car.track(frame, persist=True, classes=vehicles)[0]
+            # print(detections)
             detections_ = []
-            for detection in detections.boxes.data.tolist():
-                x1, y1, x2, y2, score, class_id = detection
-                if int(class_id) in vehicles:
-                    detections_.append((x1, y1, x2, y2, score))
+            boxes = detections.boxes
+            if boxes is None:
+                continue
+            track_ids = boxes.id.int().cpu().tolist()
+            conf = boxes.conf.cpu().tolist()
+            boxes = boxes.xyxy.int().cpu().tolist()
+            for box, id, conf in zip(boxes, track_ids, conf):
+                x1, y1, x2, y2 = box
+                score = conf
+                car_id = id
+                detections_.append((x1, y1, x2, y2, score, car_id))
 
             # Отслеживаем машины
-            vehicles_id = tracker.update(np.asarray(detections_))
+            # vehicles_id = tracker.update(np.asarray(detections_))
+            vehicles_id = tracker.update_tracks(detections_, frame=frame)
             license_plates = model_plates.predict(frame)[0]
             for license_plate in license_plates.boxes.data.tolist():
-                x1, y1, x2, y2, score, class_id = license_plate
+                x1, y1, x2, y2, score, _ = license_plate
 
-                xcar1, ycar1, xcar2, ycar2, car_id = get_car(license_plate, vehicles_id)
+                xcar1, ycar1, xcar2, ycar2, car_id = get_car_yolo(
+                    license_plate, vehicles_id
+                )
 
                 if car_id != -1:
                     # Обрезаем изображение
@@ -80,14 +92,14 @@ def read_video(video_path: str, results_path=None):
                         license_plate_gray, ddepth=-1, kernel=sharp_filter
                     )
 
-                    cv2.imwrite(
-                        f"./test/test_orig_{frame_number}_orig_{rand()}.png",
-                        license_plate_cropped,
-                    )
-                    cv2.imwrite(
-                        f"./test/test_{frame_number}_orig_{rand()}.png",
-                        license_plate_gray,
-                    )
+                    # cv2.imwrite(
+                    #     f"./test/test_orig_{frame_number}_orig_{rand()}.png",
+                    #     license_plate_cropped,
+                    # )
+                    # cv2.imwrite(
+                    #     f"./test/test_{frame_number}_orig_{rand()}.png",
+                    #     license_plate_gray,
+                    # )
                     for low_thresh in range(142, 150):
                         _, license_plate_gray_thresh = cv2.threshold(
                             license_plate_gray, low_thresh, 255, cv2.THRESH_BINARY
@@ -96,10 +108,10 @@ def read_video(video_path: str, results_path=None):
                         # _, license_plate_gray_thresh = cv2.threshold(
                         #     license_plate_gray, 147, 255, cv2.THRESH_BINARY
                         # )
-                        cv2.imwrite(
-                            f"./test/test_{frame_number}_{low_thresh}_{rand()}.png",
-                            license_plate_gray_thresh,
-                        )
+                        # cv2.imwrite(
+                        #     f"./test/test_{frame_number}_{low_thresh}_{rand()}.png",
+                        #     license_plate_gray_thresh,
+                        # )
 
                         # Читаем номер пластины
                         license_plate_text, text_score = read_license_plate(

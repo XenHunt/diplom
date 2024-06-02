@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+from icecream import ic
 
 numbs = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
 chars = {"A", "B", "E", "K", "M", "H", "O", "P", "C", "T", "X", "Y"}
@@ -43,4 +43,54 @@ def get_df(path: str):
             # print(x_)
         return np.array(eval(x_))
 
-    return pd.read_csv(path, converters={"lp_bbox": fix_list, "car_bbox": fix_list})
+    df = pd.read_csv(path, converters={"lp_bbox": fix_list, "car_bbox": fix_list})
+    df["lp_text"] = df["lp_text"].fillna("")
+    return df
+
+
+def create_search_pattern(pattern: str):
+    ret = ""
+    for index, char in enumerate(pattern):
+        ic(ret)
+        if char == "?":
+            if index == 8:
+                ret += "[0-9ABEKMHOPCTYX]?"
+            else:
+                ret += "[0-9ABEKMHOPCTYX]"
+        else:
+            ret += char
+    ic(ret)
+    return ret
+
+
+def create_list_of_frames(frames: list):
+    ret = []
+    first = prev = frames[0]
+    for frame in frames[1:]:
+        if frame - prev > 1:
+            if prev == first:
+                ret.append(f"{first}")
+            else:
+                ret.append(f"{first}-{prev}")
+
+            first = prev = frame
+
+        else:
+            prev = frame
+
+    if prev == first:
+        ret.append(f"{first}")
+    else:
+        ret.append(f"{first}-{prev}")
+
+    ic(ret)
+
+    return ret
+
+
+def get_contrast_color(img):
+    average_color = np.mean(img, axis=(0, 1))
+    # Теперь вернем вектор с 255 - average_color[i]
+    # ic([int(255 - c) for c in average_color])
+    # return [int(c) for c in average_color]
+    return (0, 0, 255)

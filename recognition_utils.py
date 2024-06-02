@@ -1,3 +1,4 @@
+from deep_sort_realtime.deep_sort.track import Track
 import easyocr
 import string
 import pyarrow
@@ -26,9 +27,25 @@ def __is_digit__(text: str):
     )
 
 
-dict_char_to_int = {"O": "0", "I": "1", "J": "3", "A": "4", "G": "6", "S": "5"}
+dict_char_to_int = {
+    "O": "0",
+    "I": "1",
+    "J": "3",
+    "A": "4",
+    "G": "6",
+    "S": "5",
+    "T": "7",
+}
 
-dict_int_to_char = {"0": "O", "1": "I", "3": "J", "4": "A", "6": "G", "5": "S"}
+dict_int_to_char = {
+    "0": "O",
+    "1": "I",
+    "3": "J",
+    "4": "A",
+    "6": "G",
+    "5": "S",
+    "7": "T",
+}
 
 
 def check_plate(text: str):
@@ -100,7 +117,7 @@ def read_license_plate(license_plate_img):
         _, text, score = detection
 
         text = text.upper().replace(" ", "")
-        print(text)
+        # print(text)
         # Проверяем на серию
         if check_plate(text):
             return fix_plate(text), score
@@ -124,6 +141,51 @@ def get_car(license_plate, cars):
     if foundIt:
         print(cars[car_indx])
         return cars[car_indx]
+
+    return -1, -1, -1, -1, -1
+
+
+def get_car_deep(license_plate, tracks: list[Track]):
+    """
+    Получаем машину, к которой относится её номер
+    """
+    x1, y1, x2, y2, score, class_id = license_plate
+
+    foundIt = False
+    for track in tracks:
+        if not track.is_confirmed():
+            continue
+        bbox = track.to_tlwh(orig=True, orig_strict=True)
+        if bbox is None:
+            continue
+        xcar1, ycar1, xcar2, ycar2 = bbox
+        xcar2, ycar2 = xcar1 + xcar2, ycar1 + ycar2
+        track_id = track.track_id
+        if x1 > xcar1 and y1 > ycar1 and x2 < xcar2 and y2 < ycar2:
+            car_indx = track_id
+            foundIt = True
+            break
+    if foundIt:
+        return xcar1, ycar1, xcar2, ycar2, car_indx
+
+    return -1, -1, -1, -1, -1
+
+
+def get_car_yolo(license_plate, tracks):
+    """
+    Получаем машину, к которой относится её номер
+    """
+    x1, y1, x2, y2, score, class_id = license_plate
+
+    foundIt = False
+    for track in tracks:
+        xcar1, ycar1, xcar2, ycar2, _, car_indx = track
+        if x1 > xcar1 and y1 > ycar1 and x2 < xcar2 and y2 < ycar2:
+            foundIt = True
+            break
+
+    if foundIt:
+        return xcar1, ycar1, xcar2, ycar2, car_indx
 
     return -1, -1, -1, -1, -1
 

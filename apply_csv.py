@@ -3,10 +3,8 @@ import pandas as pd
 import numpy as np
 import os
 import ffmpegcv
-
-
-def get_contrast_color(img):
-    average_color = np.mean(img, axis=(0, 1))
+from helpers.edit import get_contrast_color
+from icecream import ic
 
 
 def fix_list(x: str):
@@ -24,7 +22,7 @@ def fix_list(x: str):
     return np.array(eval(x_))
 
 
-def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
+def apply_and_save_video(video_path: str, csv_path: str, thickness=10, line_length=20):
     """
     Применяет фильтры из csv к видео.
     Стуктрура csv файла - {
@@ -62,6 +60,7 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
     #     fps,
     #     (width, height),
     # )
+    df["lp_text"] = df["lp_text"].fillna("")
     while ret:
         ret, frame = capture.read()
         frame_number += 1
@@ -75,9 +74,9 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
                     # print(df_[df_["car_id"] == car_id]["car_bbox"])
                     df_car_id = df_[df_["car_id"] == car_id]
                     # print(df_car_id)
-                    print(df_car_id["car_bbox"].values.tolist()[0])
+                    # print(df_car_id["car_bbox"].values.tolist()[0])
                     car_bbox = list(map(int, df_car_id["car_bbox"].values.tolist()[0]))
-                    print(car_bbox)
+                    # print(car_bbox)
                     lp_bbox = list(map(int, df_car_id["lp_bbox"].values.tolist()[0]))
 
                     # Вырежем номер
@@ -88,23 +87,23 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
                     )
                     if number == "":
                         continue
-                    print(number)
-                    print(
-                        (car_bbox[0], car_bbox[1]),
-                    )
+                    # print(number)
+                    # print(
+                    #     (car_bbox[0], car_bbox[1]),
+                    # )
                     # Выделем машину
                     ## Вверх-лево
                     cv2.line(
                         frame,
                         (car_bbox[0], car_bbox[1]),
-                        (car_bbox[0], car_bbox[1] + 10),
+                        (car_bbox[0], car_bbox[1] + line_length),
                         (0, 0, 255),
                         thickness,
                     )
                     cv2.line(
                         frame,
                         (car_bbox[0], car_bbox[1]),
-                        (car_bbox[0] + 10, car_bbox[1]),
+                        (car_bbox[0] + line_length, car_bbox[1]),
                         (0, 0, 255),
                         thickness,
                     )
@@ -113,14 +112,14 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
                     cv2.line(
                         frame,
                         (car_bbox[2], car_bbox[3]),
-                        (car_bbox[2], car_bbox[3] - 10),
+                        (car_bbox[2], car_bbox[3] - line_length),
                         (0, 0, 255),
                         thickness,
                     )
                     cv2.line(
                         frame,
                         (car_bbox[2], car_bbox[3]),
-                        (car_bbox[2] - 10, car_bbox[3]),
+                        (car_bbox[2] - line_length, car_bbox[3]),
                         (0, 0, 255),
                         thickness,
                     )
@@ -129,14 +128,14 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
                     cv2.line(
                         frame,
                         (car_bbox[0], car_bbox[3]),
-                        (car_bbox[0], car_bbox[3] - 10),
+                        (car_bbox[0], car_bbox[3] - line_length),
                         (0, 0, 255),
                         thickness,
                     )
                     cv2.line(
                         frame,
                         (car_bbox[0], car_bbox[3]),
-                        (car_bbox[0] + 10, car_bbox[3]),
+                        (car_bbox[0] + line_length, car_bbox[3]),
                         (0, 0, 255),
                         thickness,
                     )
@@ -145,7 +144,15 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
                     cv2.line(
                         frame,
                         (car_bbox[2], car_bbox[1]),
-                        (car_bbox[2], car_bbox[1] + 10),
+                        (car_bbox[2], car_bbox[1] + line_length),
+                        (0, 0, 255),
+                        thickness,
+                    )
+
+                    cv2.line(
+                        frame,
+                        (car_bbox[2], car_bbox[1]),
+                        (car_bbox[2] - line_length, car_bbox[1]),
                         (0, 0, 255),
                         thickness,
                     )
@@ -165,7 +172,9 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
                         (lp_bbox[0], lp_bbox[1] - (lp_bbox[3] - lp_bbox[1])),
                         cv2.FONT_HERSHEY_DUPLEX,
                         1.5,
-                        (255, 0, 0),
+                        get_contrast_color(
+                            frame[car_bbox[1] : car_bbox[3], car_bbox[0] : car_bbox[2]]
+                        ),
                         1,
                         cv2.LINE_AA,
                     )
@@ -173,8 +182,11 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10):
                     # Сохраняем видео
             output_video.write(frame)
 
+    output_video.release()
+    capture.release()
 
-def apply_and_save_image(image_path: str, csv_path: str, thickness=10):
+
+def apply_and_save_image(image_path: str, csv_path: str, thickness=10, line_length=20):
     """
     Применяет фильтры из csv к изображению.
     Стуктрура csv файла - {
@@ -191,23 +203,27 @@ def apply_and_save_image(image_path: str, csv_path: str, thickness=10):
 
     # Применяем фильтры
     for index, row in df.iterrows():
-        car_bbox = list(map(int, df["car_bbox"].values.tolist()[0]))
-        lp_bbox = list(map(int, df["lp_bbox"].values.tolist()[0]))
+        # ic(row["car_bbox"])
+        car_bbox = list(map(int, row["car_bbox"]))
+        lp_bbox = list(map(int, row["lp_bbox"]))
 
-        number = str(df["lp_text"].values.tolist()[0])
+        number = str(row["lp_text"])
         if number == "":
             continue
+        # ic(row)
+
+        ## Вверх-лево
         cv2.line(
             image,
             (car_bbox[0], car_bbox[1]),
-            (car_bbox[0], car_bbox[1] + 10),
+            (car_bbox[0], car_bbox[1] + line_length),
             (0, 0, 255),
             thickness,
         )
         cv2.line(
             image,
             (car_bbox[0], car_bbox[1]),
-            (car_bbox[0] + 10, car_bbox[1]),
+            (car_bbox[0] + line_length, car_bbox[1]),
             (0, 0, 255),
             thickness,
         )
@@ -216,14 +232,14 @@ def apply_and_save_image(image_path: str, csv_path: str, thickness=10):
         cv2.line(
             image,
             (car_bbox[2], car_bbox[3]),
-            (car_bbox[2], car_bbox[3] - 10),
+            (car_bbox[2], car_bbox[3] - line_length),
             (0, 0, 255),
             thickness,
         )
         cv2.line(
             image,
             (car_bbox[2], car_bbox[3]),
-            (car_bbox[2] - 10, car_bbox[3]),
+            (car_bbox[2] - line_length, car_bbox[3]),
             (0, 0, 255),
             thickness,
         )
@@ -232,14 +248,14 @@ def apply_and_save_image(image_path: str, csv_path: str, thickness=10):
         cv2.line(
             image,
             (car_bbox[0], car_bbox[3]),
-            (car_bbox[0], car_bbox[3] - 10),
+            (car_bbox[0], car_bbox[3] - line_length),
             (0, 0, 255),
             thickness,
         )
         cv2.line(
             image,
             (car_bbox[0], car_bbox[3]),
-            (car_bbox[0] + 10, car_bbox[3]),
+            (car_bbox[0] + line_length, car_bbox[3]),
             (0, 0, 255),
             thickness,
         )
@@ -248,7 +264,15 @@ def apply_and_save_image(image_path: str, csv_path: str, thickness=10):
         cv2.line(
             image,
             (car_bbox[2], car_bbox[1]),
-            (car_bbox[2], car_bbox[1] + 10),
+            (car_bbox[2], car_bbox[1] + line_length),
+            (0, 0, 255),
+            thickness,
+        )
+
+        cv2.line(
+            image,
+            (car_bbox[2], car_bbox[1]),
+            (car_bbox[2] - line_length, car_bbox[1]),
             (0, 0, 255),
             thickness,
         )
@@ -268,7 +292,10 @@ def apply_and_save_image(image_path: str, csv_path: str, thickness=10):
             (lp_bbox[0], lp_bbox[1] - (lp_bbox[3] - lp_bbox[1])),
             cv2.FONT_HERSHEY_DUPLEX,
             1.5,
-            (255, 0, 0),
+            # get_contrast_color(
+            #     image[car_bbox[1] : car_bbox[3], car_bbox[0] : car_bbox[2]]
+            # ),
+            (0, 0, 255),
             1,
             cv2.LINE_AA,
         )

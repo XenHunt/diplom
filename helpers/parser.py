@@ -17,3 +17,6 @@ editParser.add_argument("thresholdValue", type=int, required=True, location="for
 
 updateParser = reqparse.RequestParser(bundle_errors=True)
 updateParser.add_argument("plate_number", type=str, required=True, location="form")
+
+searchParser = reqparse.RequestParser(bundle_errors=True)
+searchParser.add_argument("searchPattern", type=str, required=True, location="form")

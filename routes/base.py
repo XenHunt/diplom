@@ -1,3 +1,4 @@
+from re import search
 from flask import send_file, send_from_directory
 from flask_cors import cross_origin
 from app import app
@@ -78,11 +79,11 @@ def get_image(id: int):
     if type(model) is not ImageModel:
         return {"message": "No such image"}, 404
     if not os.path.exists(
-        os.path.join(model.getPath(), f"origina_filtered{model.extension}")
+        os.path.join(model.getPath(), f"original_filtered{model.extension}")
     ):
         return send_from_directory(model.getPath(), f"original{model.extension}"), 200
     return (
-        send_from_directory(model.getPath(), f"origina_filtered{model.extension}"),
+        send_from_directory(model.getPath(), f"original_filtered{model.extension}"),
         200,
     )
 
@@ -106,7 +107,7 @@ def upload_media():
         create_needed_folder(path)
         file.save(f"{path}/original{extension}")
         processImage.queue(model)
-        return {"message": "Image uploaded"}, 201
+        return {"message": "Image uploaded", "model": model.toJson()}, 201
 
     if allowed_video(file.filename):
         # Сохраним в папку config['videos_folders']/<название файла>_<номер id>/original.<расширение>
@@ -116,7 +117,7 @@ def upload_media():
         file.save(f"{path}/original{extension}")
         model.createPreview()
         processVideo.queue(model)
-        return {"message": "Video uploaded"}, 201
+        return {"message": "Video uploaded", "model": model.toJson()}, 201
     return {"message": "Wrong file type"}, 400
 
 

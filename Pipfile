@@ -21,6 +21,11 @@ rq = "*"
 flask-rq2 = {extras = ["cli"], version = "*"}
 flask-cli = "*"
 moviepy = "*"
+scikit-learn = "*"
+scikit-image = "*"
+tensorflow = "*"
+filterpy = "*"
+deep-sort-realtime = "*"
 
 [dev-packages]
 
