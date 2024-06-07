@@ -48,6 +48,7 @@ def get_video_preview(video_id: int, frame_number: int):
     if model is None:
         raise Exception("No such video")
     frame = get_frame(model, frame_number)
+    font = cv2.FONT_HERSHEY_DUPLEX
     df = get_df(os.path.join(model.getPath(), "data_fixed.csv"))
     # Достанем все записи соответсвующие текущему кадру
     df = df[df["frame_number"] == frame_number]
@@ -58,24 +59,22 @@ def get_video_preview(video_id: int, frame_number: int):
         lp_bbox = list(map(int, df_car_id["lp_bbox"].values.tolist()[0]))
 
         number = str(df_car_id["lp_text"].values.tolist()[0])
-        if number == "":
-            color = (0, 0, 255)
-        else:
-            color = (0, 255, 0)
+
+        size = cv2.getTextSize(car_id, font, 2, 1)
         cv2.rectangle(
             frame,
-            (lp_bbox[0], lp_bbox[1]),
-            (lp_bbox[2], lp_bbox[3]),
-            color,
-            10,
+            (lp_bbox[0], lp_bbox[1] - size[1]),
+            (lp_bbox[0], lp_bbox[3] - size[1]),
+            (255, 255, 255),
+            -1,
         )
 
         cv2.putText(
             frame,
             str(int(car_id)),
-            (lp_bbox[0], lp_bbox[3]),
+            (lp_bbox[0], lp_bbox[1]),
             cv2.FONT_HERSHEY_DUPLEX,
-            1.5,
+            2,
             get_contrast_color(frame[lp_bbox[1] : lp_bbox[3], lp_bbox[0] : lp_bbox[2]]),
             1,
             cv2.LINE_AA,

@@ -2,7 +2,6 @@
 from ultralytics import YOLO
 from sort.sort import Sort
 import numpy as np
-from deep_sort_realtime.deepsort_tracker import DeepSort
 import cv2
 from recognition_utils import get_car, read_license_plate, write_to_csv, get_car_yolo
 from icecream import ic

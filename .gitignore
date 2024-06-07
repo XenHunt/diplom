@@ -25,3 +25,5 @@
 *.py#
 /models/mars/
 /tracker.py
+/diff/
+/*.pt

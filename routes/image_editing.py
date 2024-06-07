@@ -24,21 +24,20 @@ def get_imageedit_preview(image_id: int):
         raise Exception("No such image")
     df = get_df(os.path.join(model.getPath(), "data.csv"))
     image = cv2.imread(os.path.join(model.getPath(), f"original{model.extension}"))
+    font = cv2.FONT_HERSHEY_DUPLEX
     for car_id in df["car_id"]:
         df_car_id = df[df["car_id"] == car_id]
         lp_bbox = list(map(int, df_car_id["lp_bbox"].values.tolist()[0]))
 
         number = str(df_car_id["lp_text"].values.tolist()[0])
-        if number == "":
-            color = (0, 0, 255)
-        else:
-            color = (0, 255, 0)
+
+        size = cv2.getTextSize(car_id, font, 2, 1)
         cv2.rectangle(
             image,
-            (lp_bbox[0], lp_bbox[1]),
-            (lp_bbox[2], lp_bbox[3]),
-            color,
-            10,
+            (lp_bbox[0], lp_bbox[1] - size[1]),
+            (lp_bbox[0], lp_bbox[3] - size[1]),
+            (255, 255, 255),
+            -1,
         )
 
         cv2.putText(
@@ -46,7 +45,7 @@ def get_imageedit_preview(image_id: int):
             str(car_id),
             (lp_bbox[0], lp_bbox[1]),
             cv2.FONT_HERSHEY_DUPLEX,
-            5,
+            2,
             get_contrast_color(image[lp_bbox[1] : lp_bbox[3], lp_bbox[0] : lp_bbox[2]]),
             1,
             cv2.LINE_AA,

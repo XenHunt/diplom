@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import ffmpegcv
-from helpers.edit import get_contrast_color
+from helpers.edit import get_contrast_color, optimize_font_scale
 from icecream import ic
 
 
@@ -43,6 +43,7 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10, line_leng
             "car_bbox": fix_list,
         },
     )
+    font = cv2.FONT_HERSHEY_DUPLEX
 
     capture = cv2.VideoCapture(video_path)
 
@@ -91,6 +92,18 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10, line_leng
                     # print(
                     #     (car_bbox[0], car_bbox[1]),
                     # )
+                    # ic(lp_bbox)
+                    max_height = min(lp_bbox[3] - lp_bbox[1], lp_bbox[1])
+                    max_width = lp_bbox[2] - lp_bbox[0]
+                    # Узнаем размеры текста
+                    scale = optimize_font_scale(
+                        number, font, max_width, max_height, thickness
+                    )
+                    # Закрасим область над номером в белый
+                    frame[
+                        lp_bbox[1] - max_height - thickness : lp_bbox[1] - thickness,
+                        lp_bbox[0] : lp_bbox[2],
+                    ] = (255, 255, 255)
                     # Выделем машину
                     ## Вверх-лево
                     cv2.line(
@@ -169,13 +182,13 @@ def apply_and_save_video(video_path: str, csv_path: str, thickness=10, line_leng
                     cv2.putText(
                         frame,
                         number,
-                        (lp_bbox[0], lp_bbox[1] - (lp_bbox[3] - lp_bbox[1])),
+                        (lp_bbox[0], lp_bbox[1] - thickness),
                         cv2.FONT_HERSHEY_DUPLEX,
-                        1.5,
+                        scale,
                         get_contrast_color(
                             frame[car_bbox[1] : car_bbox[3], car_bbox[0] : car_bbox[2]]
                         ),
-                        1,
+                        4,
                         cv2.LINE_AA,
                     )
 
@@ -200,7 +213,7 @@ def apply_and_save_image(image_path: str, csv_path: str, thickness=10, line_leng
     """
     image = cv2.imread(image_path)
     df = pd.read_csv(csv_path, converters={"car_bbox": fix_list, "lp_bbox": fix_list})
-
+    font = cv2.FONT_HERSHEY_DUPLEX
     # Применяем фильтры
     for index, row in df.iterrows():
         # ic(row["car_bbox"])
@@ -212,6 +225,16 @@ def apply_and_save_image(image_path: str, csv_path: str, thickness=10, line_leng
             continue
         # ic(row)
 
+        max_height = min(lp_bbox[3] - lp_bbox[1], lp_bbox[1])
+        max_width = lp_bbox[2] - lp_bbox[0]
+
+        # Узнаем размеры текста
+        scale = optimize_font_scale(number, font, max_width, max_height, thickness)
+        # Закрасим область над номером в белый
+        image[
+            lp_bbox[1] - max_height - thickness : lp_bbox[1] - thickness,
+            lp_bbox[0] : lp_bbox[2],
+        ] = (255, 255, 255)
         ## Вверх-лево
         cv2.line(
             image,
@@ -289,9 +312,9 @@ def apply_and_save_image(image_path: str, csv_path: str, thickness=10, line_leng
         cv2.putText(
             image,
             number,
-            (lp_bbox[0], lp_bbox[1] - (lp_bbox[3] - lp_bbox[1])),
+            (lp_bbox[0], lp_bbox[1] - thickness),
             cv2.FONT_HERSHEY_DUPLEX,
-            1.5,
+            scale,
             # get_contrast_color(
             #     image[car_bbox[1] : car_bbox[3], car_bbox[0] : car_bbox[2]]
             # ),
