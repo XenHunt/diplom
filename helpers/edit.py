@@ -50,21 +50,6 @@ def get_df(path: str):
     return df
 
 
-def create_search_pattern(pattern: str):
-    ret = ""
-    for index, char in enumerate(pattern):
-        ic(ret)
-        if char == "?":
-            if index == 8:
-                ret += "[0-9ABEKMHOPCTYX]?"
-            else:
-                ret += "[0-9ABEKMHOPCTYX]"
-        else:
-            ret += char
-    ic(ret)
-    return ret
-
-
 def create_list_of_frames(frames: list):
     ret = []
     first = prev = frames[0]

@@ -1,6 +1,7 @@
 # from numpy.random import rand
 from ultralytics import YOLO
-from sort.sort import Sort
+
+# from sort.sort import Sort
 import numpy as np
 import cv2
 from recognition_utils import get_car, read_license_plate, write_to_csv, get_car_yolo
@@ -16,10 +17,9 @@ models_plates_names = [
     "./models/platesRec/yolov9_100e.pt",
     "./models/platesRec/yolov9_5e_v2.pt",
 ]
-model_car_name = "./models/carRecogn/yolov9c.pt"
 
 
-selected_model = models_plates_names[2]
+selected_model = models_plates_names[1]
 
 vehicles = [2, 3, 5, 7]
 model_plates = YOLO(selected_model)
@@ -35,7 +35,7 @@ def read_video(video_path: str, results_path=None):
     capture = cv2.VideoCapture(video_path)
     ic()
     # tracker = Sort()
-    model_car = YOLO(model_car_name)
+    model_car = YOLO("./models/carRecogn/yolov9c.pt")
     ret = True
     frame_number = -1
     while ret:
@@ -44,8 +44,8 @@ def read_video(video_path: str, results_path=None):
         # ic("inside")
         if ret:
             # ic("good ret")
-            if frame_number > 890 or frame_number < 763:
-                continue
+            # if frame_number > 890 or frame_number < 763:
+            #     continue
             # if frame_number != 16:
             #     continue
             results[frame_number] = {}
@@ -67,7 +67,7 @@ def read_video(video_path: str, results_path=None):
 
             # Отслеживаем машины
             # vehicles_id = tracker.update(np.asarray(detections_))
-            vehicles_id = tracker.update_tracks(detections_, frame=frame)
+            vehicles_id = detections_
             license_plates = model_plates.predict(frame)[0]
             for license_plate in license_plates.boxes.data.tolist():
                 x1, y1, x2, y2, score, _ = license_plate
@@ -148,17 +148,17 @@ def read_video(video_path: str, results_path=None):
 def read_image(image_path: str, results_path=None):
     im = cv2.imread(image_path)
     results = {}
-    tracker = Sort()
-
+    # tracker = Sort()
+    model_car = YOLO("./models/carRecogn/yolov9c.pt")
     detections = model_car.predict(im)[0]
     detections_ = []
-    for license_plate in detections.boxes.data.tolist():
-        x1, y1, x2, y2, score, class_id = license_plate
+    for car in detections.boxes.data.tolist():
+        x1, y1, x2, y2, score, class_id = car
         if int(class_id) in vehicles:
             detections_.append((x1, y1, x2, y2, score))
-    vehicles_id = tracker.update(np.asarray(detections_))
-    license_plate = model_plates.predict(im)[0]
-    for license_plate in license_plate.boxes.data.tolist():
+    vehicles_id = detections_
+    license_plates = model_plates.predict(im)[0]
+    for license_plate in license_plates.boxes.data.tolist():
         x1, y1, x2, y2, score, class_id = license_plate
         xcar1, ycar1, xcar2, ycar2, car_id = get_car(license_plate, vehicles_id)
 

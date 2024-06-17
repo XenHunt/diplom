@@ -1,7 +1,9 @@
 from app import app
 from helpers.parser import searchParser
 from orm import VideoModel
-from helpers.edit import get_df, create_search_pattern, create_list_of_frames
+
+from helpers.edit import get_df, create_list_of_frames
+
 from icecream import ic
 import os
 
@@ -19,9 +21,7 @@ def search_cars(id: int):
     df = get_df(os.path.join(model.getPath(), "data_fixed.csv"))
     # df["car_id"] = df["car_id"].astype(int)
     unique_values = df[
-        df["lp_text"]
-        .fillna("")
-        .str.contains(create_search_pattern(data["searchPattern"]), regex=True)
+        df["lp_text"].fillna("").str.contains(data["searchPattern"], regex=True)
     ]["car_id"].unique()
 
     ret = []

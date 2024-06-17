@@ -60,11 +60,12 @@ def get_video_preview(video_id: int, frame_number: int):
 
         number = str(df_car_id["lp_text"].values.tolist()[0])
 
-        size = cv2.getTextSize(car_id, font, 2, 1)
+        size = cv2.getTextSize(str(car_id), font, 2, 1)[0]
+        ic(size)
         cv2.rectangle(
             frame,
             (lp_bbox[0], lp_bbox[1] - size[1]),
-            (lp_bbox[0], lp_bbox[3] - size[1]),
+            (lp_bbox[0] + size[0], lp_bbox[3] - size[1]),
             (255, 255, 255),
             -1,
         )

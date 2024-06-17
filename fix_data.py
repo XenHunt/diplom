@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+from icecream import ic
 
 
 def fix_csv_data(path: str):
@@ -58,8 +59,8 @@ def fix_csv_data(path: str):
             # if car_id != 47:
             #     continue
             result_step = df_.iloc[num]
-            print("Right")
-            print(result_step)
+            # print("Right")
+            # ic(result_step)
             if num > 0:
                 # Теперь нам надо проинтерполировать значения
                 x = (
@@ -68,90 +69,54 @@ def fix_csv_data(path: str):
                 )
                 l_car_bbox = results_steps[-1]["car_bbox"]
                 r_car_bbox = result_step["car_bbox"]
-                print(l_car_bbox)
+                # print(l_car_bbox)
 
                 l_lp_bbox = results_steps[-1]["lp_bbox"]
                 r_lp_bbox = result_step["lp_bbox"]
 
                 # Теперь задаим кадры, которых нету между двумя известными
-                y = np.arange(x[0] + 1, x[1])
-                print("Y:")
-                print(y)
-                # Проинтерполируем значения
-                car_bbox = np.array(
-                    [
-                        np.interp(y, x, (l_car_bbox[0], r_car_bbox[0])),
-                        np.interp(y, x, (l_car_bbox[1], r_car_bbox[1])),
-                        np.interp(y, x, (l_car_bbox[2], r_car_bbox[2])),
-                        np.interp(y, x, (l_car_bbox[3], r_car_bbox[3])),
+                if x[1] - x[0] <= 24 * 2:
+
+                    y = np.arange(x[0] + 1, x[1])
+                    # print("Y:")
+                    # print(y)
+                    # Проинтерполируем значения
+                    car_bbox = np.array(
+                        [
+                            np.interp(y, x, (l_car_bbox[0], r_car_bbox[0])),
+                            np.interp(y, x, (l_car_bbox[1], r_car_bbox[1])),
+                            np.interp(y, x, (l_car_bbox[2], r_car_bbox[2])),
+                            np.interp(y, x, (l_car_bbox[3], r_car_bbox[3])),
+                        ]
+                    ).T
+
+                    lp_bbox = np.array(
+                        [
+                            np.interp(y, x, (l_lp_bbox[0], r_lp_bbox[0])),
+                            np.interp(y, x, (l_lp_bbox[1], r_lp_bbox[1])),
+                            np.interp(y, x, (l_lp_bbox[2], r_lp_bbox[2])),
+                            np.interp(y, x, (l_lp_bbox[3], r_lp_bbox[3])),
+                        ]
+                    ).T
+                    # ic(car_bbox)
+
+                    # Соберем результат как Series
+                    res = [
+                        pd.Series(
+                            {
+                                "frame_number": y[i],
+                                "car_id": car_id,
+                                "car_bbox": car_bbox[i],
+                                "lp_bbox": lp_bbox[i],
+                                "lp_text": label,
+                                "lp_bbox_score": mean_lp_bbox_score,
+                                "lp_text_score": mean_lp_text_score,
+                            }
+                        )
+                        for i in range(len(y))
                     ]
-                ).T
-
-                lp_bbox = np.array(
-                    [
-                        np.interp(y, x, (l_lp_bbox[0], r_lp_bbox[0])),
-                        np.interp(y, x, (l_lp_bbox[1], r_lp_bbox[1])),
-                        np.interp(y, x, (l_lp_bbox[2], r_lp_bbox[2])),
-                        np.interp(y, x, (l_lp_bbox[3], r_lp_bbox[3])),
-                    ]
-                ).T
-
-                # car_bbox1 = np.interp(y, x, [l_car_bbox1, r_car_bbox1])
-                # car_bbox2 = np.interp(y, x, [l_car_bbox2, r_car_bbox2])
-                # car_bbox3 = np.interp(y, x, [l_car_bbox3, r_car_bbox3])
-                # car_bbox4 = np.interp(y, x, [l_car_bbox4, r_car_bbox4])
-
-                # lp_bbox1 = np.interp(y, x, [l_lp_bbox1, r_lp_bbox1])
-                # lp_bbox2 = np.interp(y, x, [l_lp_bbox2, r_lp_bbox2])
-                # lp_bbox3 = np.interp(y, x, [l_lp_bbox3, r_lp_bbox3])
-                # lp_bbox4 = np.interp(y, x, [l_lp_bbox4, r_lp_bbox4])
-
-                # # Теперь соберем значения по строчно
-                # car_bbox = np.array(
-                #     [
-                #         [car_bbox1[i], car_bbox2[i], car_bbox3[i], car_bbox4[i]]
-                #         for i in range(len(car_bbox1))
-                #     ]
-                # )
-
-                # lp_bbox = np.array(
-                #     [
-                #         [lp_bbox1[i], lp_bbox2[i], lp_bbox3[i], lp_bbox4[i]]
-                #         for i in range(len(lp_bbox1))
-                #     ]
-                # )
-
-                # Соберем результат как Series
-                res = [
-                    pd.Series(
-                        {
-                            "frame_number": y[i],
-                            "car_id": car_id,
-                            "car_bbox": car_bbox[i],
-                            "lp_bbox": lp_bbox[i],
-                            "lp_text": label,
-                            "lp_bbox_score": mean_lp_bbox_score,
-                            "lp_text_score": mean_lp_text_score,
-                        }
-                    )
-                    for i in range(len(y))
-                ]
-
-                # res = [
-                #     [
-                #         y[i],
-                #         car_id,
-                #         car_bbox[i],
-                #         lp_bbox[i],
-                #         results_steps[-1][4],
-                #         mean_lp_bbox_score,
-                #         mean_lp_text_score,
-                #     ]
-                #     for i in range(len(y))
-                # ]
-                print("Res")
-                print(res)
-                results_steps.extend(res)
+                    # ic(res)
+                    results_steps.extend(res)
 
             # Запишим результат интерполирования
             results_steps.append(result_step)
